@@ -1,32 +1,258 @@
-# Prerequisites
-*.d
+#include<stdio.h> //direktiva pretprocesoru
+#include<math.h> //direktiva pretprocesoru
+#include<stdlib.h> //direktiva pretprocesoru
+#include<string.h> //direktiva pretprocesoru
+#include<ctype.h> //direktiva pretprocesoru
+#define maxlampice 300 //definicija konstante max
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+float potrosnja(int *vrsta_ledice,int *kolicina_ledice,int n){ //funkcija za izračun potrošnje koristeći zapis o boji lampica i količini 
+	int i; //deklaracija brojaca
+	float u=0,struja=0.02,rezultat,t; //deklaracija varijabli, struja postavljena na 0.02 A, te su sukladno s time zadani padovi napona na različitim ledicama
+	printf("Molimo upisite koliko su prosjecno sati u danu ledice upaljene:\n");
+	scanf("%f",&t); //upis vremena upaljenih lampica
+	for(i=0;i<n;i++){
+		switch(*(vrsta_ledice+i)){
+			case(1):{u+=1.8*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+			case(2):{u+=2*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+			case(3):{u+=2.2*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+			case(4):{u+=3.5*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+			case(5):{u+=3.6*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+			case(6):{u+=4*(*(kolicina_ledice+i)); //zbrajanje napona
+				break;
+			}
+		}
+	}
+	rezultat=u*struja*t; //izracun potrosnje 
+	return rezultat; //vracanje te potrosnje u glavni program 
+}
 
-# Precompiled Headers
-*.gch
-*.pch
+int main(){
+	
+	struct baza_s{
+	char ime[40];
+	char prezime[50];
+	int godine; 
+	char spol[1]; 
+	}kupci[10000]; //deklaracije strukture 
+	
+	FILE *upis = fopen("POTROSNJE.txt","a+"); //otvaranje datoteke, a+ za pisanje, čitanje, dodavanje na kraj datoteke ako postoji i stvaranje nove ako ne postoji
+	if(upis == NULL) 
+		{printf("Pogreska pri otvaranju datoteke");
+		exit(1); 
+		}
+		 
+	int brojledica, odabir[maxlampice], brojodabranih[maxlampice],mjesec,dani,godina,danasnjidan,danasnjimjesec,danasnjagodina,dandostave,mjesecdostave,godinadostave; //deklaracija varijabli 
+	int *pokazivac1=&odabir[0], *pokazivac2=&brojodabranih[0]; //deklaracija pokazivaca
+	int i,j,n,brojkupaca=0; //deklaracija pomocnih varijabli
+	float pom; //deklaracija pomocnih varijabli
+	float cijenaposatu; //deklaracija varijabli
+	char ne[]="ne",da[]="da",odgovor1[2],odgovor2[2],odgovor3[2],valuta[10]; //deklaracija varijabli
+do{
+	printf("POZDRAV :)\nMolimo unesite koliko lampica zelite:\n");
+	do{scanf("%d",&brojledica); //upis
+		if(brojledica<1) //u slucaju krivog upisa
+			printf("Nazalost odabrali ste broj manji od jedne ledice. Molimo ponovite upis.\n");
+		if(brojledica>maxlampice) //u slucaju krivog upisa
+			printf("Nazalost odabrali ste prevelik broj ledica za nasu proizvodnju. Molimo ponovite upis.\n");
+	}while(brojledica<1 or brojledica>maxlampice); //dok traje krivi upis
+	
+	printf("Rekli ste da zelite %d lampica, molimo odaberite koliko lampica koje boje zelite:\n",brojledica);
+	
+	while(brojledica>0){ 
+		for(i=0;i<brojledica;i++){ //izvodi se dok se za svaku ledicu pojedinacno ne odabere boja ili dok se ne "potrosi "odabir ledica 
+			n=i+1; //pamcenje broja upisa
+			do{printf("Mogucnosti boja koje nudimo su:\n1)CRVENA\n2)JANTAR\n3)ZUTA\n4)ZELENA\n5)PLAVA\n6)BIJELA\n"); //nudenje izbora
+			scanf("%d",&odabir[i]); //spremanje izbora
+			if(odabir[i]<1 or odabir[i]>6) //u slucaju krivog izbora 
+				printf("Krivi odabir. Molimo ponovite\n");
+			}while(odabir[i]<1 or odabir[i]>6);
+			
+			do{printf("Odabrali ste boju. Koliko ih zelite? Na izbor imate jos %d ledica.\n",brojledica); //odredivanje koliko ledica kojih boja
+			scanf("%d",&brojodabranih[i]); 
+			if(brojodabranih[i]>brojledica) //u slucaju ako je odabran prevelik broj ledica
+				printf("Odabrali ste prevelik broj ledica. Ponovite.\n"); 
+			}while(brojodabranih[i]>brojledica);
+		brojledica-=brojodabranih[i];	//oduzimanje izabranih od moguceg broja izbora
+		}	 
+	}
+	
+	pom=potrosnja(&odabir[0],&brojodabranih[0],n);
+	printf("Vasa dnevna potrosnja ce biti %.2f Wh\n",pom); //Racuna kolika je potrosnja u Wh
+	
+	printf("\nZelite li znati koliko bi iznosio vas mjesecni racun? (Upisite da ili ne)\n");
+	scanf("%s",&odgovor1);
+	for(j=0;j<strlen(odgovor1);j++)
+		odgovor1[j]=tolower(odgovor1[j]); //sluzi ukoliko korisnik upise velikim slovima
+	if(strcmp(da,odgovor1)==0){ 
+		printf("Koliko placate 1Wh u svom kucanstvu? (napisite iznos zatim valutu)\n");
+		scanf("%f %s",&cijenaposatu,&valuta); //upis cijene po satu i u kojoj valuti 
+		printf("Za koji mjesec i za koju godinu zelite znati?\n"); //radi preciznijeg izracuna trazi se tocan mjesec 
+		scanf("%d %d",&mjesec,&godina);
+		switch(mjesec){ //trazenje tocnog broja dana po mjesecima
+			case(1):{ dani=31;
+				break;
+			}
+			case(2):{ if(godina%4==0 or godina%400==0) //ako je godina prijestupna 
+						dani=29; 
+					dani=28;
+				break;
+			}
+			case(3):{ dani=31;
+				break;
+			}
+			case(4):{ dani=30;
+				break;
+			}
+			case(5):{ dani=31;
+				break;
+			}
+			case(6):{ dani=30;
+				break;
+			}
+			case(7):{ dani=31;
+				break;
+			}
+			case(8):{ dani=31;
+				break;
+			}
+			case(9):{ dani=30;
+				break;
+			}
+			case(10):{dani=31;
+				break;
+			}
+			case(11):{dani=30;
+				break;
+			}
+			case(12):{dani=31;
+				break;
+			}
+		}
+	printf("Vas racun za %d. mjesecu u %d-oj godini iznosio bi: %.2f %s\n",mjesec,godina,potrosnja(&odabir[0],&brojodabranih[0],n)*dani,valuta); //ispis izracuna mjesecne potrosnje
+	}
+	printf("Sada kada znate potrosnju, zelite li naruciti proizvod koji ste odabrali?\n");
+	printf("Proizvod koji ste odabrali je:\n");
+	fprintf(upis,"Odabran proizvod:\n"); //ponavljanje korisniku sto je odabrao 
+	for(i=0;i<n;i++){
+		switch(*(pokazivac1+i)){
+			case(1):{printf("%d crvenih ledica\n",*(pokazivac2+i));
+				break;
+			}
+			case(2):{printf("%d jantar ledica\n",*(pokazivac2+i));
+				break;
+			}
+			case(3):{printf("%d zutih ledica\n",*(pokazivac2+i));
+				break;
+			}
+			case(4):{printf("%d zelenih ledica\n",*(pokazivac2+i));
+				break;
+			}
+			case(5):{printf("%d plavih ledica\n",*(pokazivac2+i));
+				break;
+			}
+			case(6):{printf("%d bijelih ledica\n",*(pokazivac2+i));
+				break;
+			}
+		}
+		
+	}
+	printf("Odgovorite sa da ili ne:\n");
+	scanf("%s",&odgovor2);
+	for(j=0;j<strlen(odgovor2);j++) //sluzi ukoliko korisnik upise velikim slovima
+		odgovor2[j]=tolower(odgovor2[j]);
+	if(strcmp(da,odgovor2)==0){ //ako je korisnik odlucio "kupiti ledice" slijedi unos njegovih podataka i spremanje u strukturu
+		printf("Hvala Vam na kupnji! :)\n");
+		printf("Molimo unesite Vase podatke:\n"); 
+		printf("Vase godine: ");
+		do{scanf("%d",&kupci[brojkupaca].godine);
+		if(kupci[brojkupaca].godine<18){ //ukoliko je kupac maloljetan izaci iz programa
+			printf("Nazalost ne prodajemo maloljetnim osobama :(");
+			return 0;
+			}
+		if(kupci[brojkupaca].godine>98) //ukoliko je kupac krivo utpikao godine
+			printf("Utipkali ste prevelik broj godina,molimo ponovite upis.\n");
+		}while(kupci[brojkupaca].godine>98);
+		printf("Vase ime: ");
+		scanf("%s",&kupci[brojkupaca].ime);
+		printf("Vase prezime: ");
+		scanf("%s",&kupci[brojkupaca].prezime);
+		
+		printf("Vas spol (utipkajte M za muski,Z za zenski,a N za drugo): ");
+		do{scanf("%s",&kupci[brojkupaca].spol);
+		if(strcmp(kupci[brojkupaca].spol,"M")!=0 && strcmp(kupci[brojkupaca].spol,"Z")!=0 && strcmp(kupci[brojkupaca].spol,"N")!=0)
+			printf("Pogresan upis.Molimo ponovite.\n");
+		}while(strcmp(kupci[brojkupaca].spol,"M")!=0 && strcmp(kupci[brojkupaca].spol,"Z")!=0 && strcmp(kupci[brojkupaca].spol,"N")!=0); 
+		brojkupaca++;
+	fprintf(upis,"%d. kupac --> %s %s %d %s\n",brojkupaca+1,kupci[brojkupaca].ime,kupci[brojkupaca].prezime,kupci[brojkupaca].godine,kupci[brojkupaca].spol);	//UPIS PODATAKA KUPCA
+	printf("Vasa narudba je uspijesno provedena!\n");
+	printf("Molimo vas utipkajte danasnji datum, a mi cemo Vam reci kad mozete ocekivati dolazak naseg artikla. (20 dana od narudbe):)\n");
+	printf("Dan: ");
+	do{scanf("%d",&danasnjidan);
+	if(danasnjidan<1 or danasnjidan>31) // u slucaju pogresnog upisa dana 
+		printf("Pogresan dan. Upisite ponovno.\n");
+	}while(danasnjidan<1 or danasnjidan>31);
+	printf("Mjesec: ");
+	do{scanf("%d",&danasnjimjesec);
+	if((danasnjidan==31 && (danasnjimjesec==4 or danasnjimjesec==6 or danasnjimjesec==9 or danasnjimjesec==11))or ((danasnjidan==31 or danasnjidan==30)&& danasnjimjesec==2)) // u slucaju upisa mjeseca za koji je broj dana prevelik
+		printf("Mjesec nema toliko dana. Upisite ponovno.\n");
+	if(danasnjimjesec<1 or danasnjimjesec>12)
+		printf("Pogresan mjesec.Upisite ponovno.\n");
+	}while(((danasnjidan==31 && (danasnjimjesec==4 or danasnjimjesec==6 or danasnjimjesec==9 or danasnjimjesec==11))or ((danasnjidan==31 or danasnjidan==30)&& danasnjimjesec==2))&&(danasnjimjesec<1 or danasnjimjesec>12)); // u slucaju upisa mjeseca za koji je broj dana prevelik
+	printf("Godina: ");
+	do{scanf("%d",&danasnjagodina);
+	if(danasnjagodina<2020)
+		printf("Pogresan upis godine. Molimo ponovite.\n"); //u slucaju upisa godine koja je manja od aktualne 
+	if(danasnjidan==29 && danasnjimjesec==2 && (godina%4!=0 or godina%400!=0)){ // u slucaju upisa mjeseca za koji je broj dana prevelik
+		printf("Godina nije prijestupna, te drugi mjesec ima 28 dana. Danasnji dan postavljen na 28.\n");
+		danasnjidan=28; //postavljanje na zadnji dan u mjesecu ukoliko godina nije prejestupna
+	}	
+	godinadostave=danasnjagodina; 
+	}while(danasnjagodina<2020);
+	
+	if(danasnjimjesec==12 && danasnjidan>11){ //u slucaju da je kraj godine i dostava stize tek sljedece godine
+		godinadostave=danasnjagodina+1;
+		mjesecdostave=1;
+		dandostave=(danasnjidan+20)-31;
+	}
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+	else if((danasnjimjesec==1 or danasnjimjesec==3 or danasnjimjesec==5 or danasnjimjesec==7 or danasnjimjesec==8 or danasnjimjesec==10 or danasnjimjesec==12)&& danasnjidan>11){ //u slucaju da je kraj mjeseca i dostava stize tek sljedeci mjesec
+		mjesecdostave=danasnjimjesec+1;
+		dandostave=(danasnjidan+20)-31;
+	}
+	else if((danasnjimjesec==4 or danasnjimjesec==6 or danasnjimjesec==9 or danasnjimjesec==11)&& danasnjidan>11){//u slucaju da je kraj mjeseca i dostava stize tek sljedeci mjesec
+		mjesecdostave=danasnjimjesec+1;
+		dandostave=(danasnjidan+20)-30;
+	}
+	else if(danasnjimjesec==2 && (danasnjagodina%4==0 or danasnjagodina%400==0)&& danasnjidan>9){//u slucaju da je kraj mjeseca i dostava stize tek sljedeci mjesec
+		mjesecdostave=danasnjimjesec+1;
+		dandostave=(danasnjidan+20)-29;
+	}
+	else if(danasnjimjesec==2 && (danasnjagodina%4!=0 && danasnjagodina%400!=0)&& danasnjidan>8){//u slucaju da je kraj mjeseca i dostava stize tek sljedeci mjesec
+		mjesecdostave=danasnjimjesec+1;
+		dandostave=(danasnjidan+20)-28;
+	}
+	else{
+		dandostave=danasnjidan+20;
+		mjesecdostave=danasnjimjesec;
+	}
+	printf("Dostava ce biti izvrsena: %d.%d.%d.\n",dandostave,mjesecdostave,godinadostave); //ispis dostave
+	}
+	printf("Ugodan nastavak dana!\n");
+	printf("Nastaviti s programom?\n");
+	scanf("%s",&odgovor3);
+	for(j=0;j<strlen(odgovor3);j++)
+		odgovor3[j]=tolower(odgovor3[j]);
+	}while(strcmp(da,odgovor3)==0); //omogucen nastavak korisnicima 
+    fclose(upis); //izlazak iz datoteke
+	return 0;
+}
